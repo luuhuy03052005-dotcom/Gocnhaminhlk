@@ -9,10 +9,21 @@ import { ConfigService } from '@nestjs/config';
 import { App, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
 import { AdminsService } from '../admins/admins.service';
+import { PermissionCode } from '../roles/schemas/permission.schema';
+import { AdminRoleCode } from '../roles/schemas/role.schema';
 import { RolesService } from '../roles/roles.service';
 import { UsersService } from '../users/users.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { AuthSessionResponse } from './interfaces/auth-session-response.interface';
+
+export interface CurrentAdmin {
+  id: string;
+  firebaseUid: string;
+  phoneNumber: string;
+  fullName: string;
+  role: AdminRoleCode;
+  permissions: PermissionCode[];
+}
 
 @Injectable()
 export class AuthService {
@@ -53,6 +64,12 @@ export class AuthService {
     return this.resolveAdminSession(decodedToken);
   }
 
+  async authenticateAdminBearer(authorization?: string): Promise<CurrentAdmin> {
+    const firebaseIdToken = this.extractBearerToken(authorization);
+    const decodedToken = await this.verifyFirebaseIdToken(firebaseIdToken);
+    return this.resolveCurrentAdmin(decodedToken);
+  }
+
   private async resolveCustomerSession(decodedToken: DecodedIdToken): Promise<AuthSessionResponse> {
     const existingUser = await this.usersService.findByFirebaseUid(decodedToken.uid);
     const user =
@@ -74,6 +91,18 @@ export class AuthService {
   }
 
   private async resolveAdminSession(decodedToken: DecodedIdToken): Promise<AuthSessionResponse> {
+    const admin = await this.resolveCurrentAdmin(decodedToken);
+
+    return {
+      id: admin.id,
+      firebaseUid: admin.firebaseUid,
+      phoneNumber: admin.phoneNumber,
+      fullName: admin.fullName,
+      role: admin.role,
+    };
+  }
+
+  private async resolveCurrentAdmin(decodedToken: DecodedIdToken): Promise<CurrentAdmin> {
     const admin = await this.adminsService.findByFirebaseUid(decodedToken.uid);
     if (!admin) {
       throw new NotFoundException({
@@ -96,6 +125,7 @@ export class AuthService {
       phoneNumber: admin.phoneNumber,
       fullName: admin.fullName,
       role: role.code,
+      permissions: role.permissions,
     };
   }
 

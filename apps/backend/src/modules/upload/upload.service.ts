@@ -1,4 +1,8 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
@@ -15,6 +19,18 @@ export interface UploadBufferInput {
   uploadedByUserId?: string | Types.ObjectId;
 }
 
+const allowedImageMimeTypes = ['image/jpeg', 'image/png', 'image/webp'] as const;
+const allowedUploadFolders = [
+  'banners',
+  'gallery',
+  'menu',
+  'vouchers',
+  'website-content',
+  'admins',
+  'users',
+] as const;
+const maxUploadSizeBytes = 5 * 1024 * 1024;
+
 @Injectable()
 export class UploadService {
   constructor(
@@ -24,6 +40,7 @@ export class UploadService {
   ) {}
 
   async uploadBuffer(input: UploadBufferInput) {
+    this.validateUploadInput(input);
     this.configureCloudinary();
 
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
@@ -70,6 +87,54 @@ export class UploadService {
     });
   }
 
+  private validateUploadInput(input: UploadBufferInput) {
+    if (
+      !allowedImageMimeTypes.includes(
+        input.mimeType as (typeof allowedImageMimeTypes)[number],
+      )
+    ) {
+      throw new BadRequestException({
+        error: 'UPLOAD_MIME_TYPE_NOT_ALLOWED',
+        message: 'Only JPEG, PNG, and WEBP images are allowed.',
+        details: {
+          allowedMimeTypes: allowedImageMimeTypes,
+        },
+      });
+    }
+
+    const actualSize = input.buffer.byteLength;
+    if (input.size <= 0 || actualSize <= 0) {
+      throw new BadRequestException({
+        error: 'UPLOAD_FILE_EMPTY',
+        message: 'Upload file must not be empty.',
+      });
+    }
+
+    if (input.size > maxUploadSizeBytes || actualSize > maxUploadSizeBytes) {
+      throw new BadRequestException({
+        error: 'UPLOAD_FILE_TOO_LARGE',
+        message: 'Upload file size must not exceed 5MB.',
+        details: {
+          maxSizeBytes: maxUploadSizeBytes,
+        },
+      });
+    }
+
+    if (
+      !allowedUploadFolders.includes(
+        input.folder as (typeof allowedUploadFolders)[number],
+      )
+    ) {
+      throw new BadRequestException({
+        error: 'UPLOAD_FOLDER_NOT_ALLOWED',
+        message: 'Upload folder is not allowed.',
+        details: {
+          allowedFolders: allowedUploadFolders,
+        },
+      });
+    }
+  }
+
   private configureCloudinary() {
     const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
     const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
@@ -101,4 +166,3 @@ export class UploadService {
     return typeof value === 'string' ? new Types.ObjectId(value) : value;
   }
 }
-

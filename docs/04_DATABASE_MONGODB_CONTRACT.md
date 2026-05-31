@@ -346,6 +346,9 @@ Rules:
 file_assets stores Cloudinary metadata only.
 Never store binary files or base64 payloads in MongoDB.
 Upload endpoints must require admin/customer authentication before calling Cloudinary.
+Image uploads must allow only image/jpeg, image/png, image/webp.
+Image uploads must reject files larger than 5MB.
+Upload folder must be selected from an allowlist such as banners, gallery, menu, vouchers, website-content, admins, users.
 ```
 
 ## feature_flags

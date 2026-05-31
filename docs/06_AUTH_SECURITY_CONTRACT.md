@@ -75,6 +75,36 @@ role_permissions
 
 Do not rely on Firebase custom claims for app permissions.
 
+## Admin Guards
+
+Admin endpoints must use backend guards in this order:
+
+```txt
+AdminAuthGuard
+PermissionGuard
+```
+
+`AdminAuthGuard` verifies the Firebase bearer token, maps the Firebase UID to an active admin in MongoDB, loads the active role, and attaches admin permissions to the request.
+
+`PermissionGuard` must read required permissions from endpoint metadata and block requests missing any required permission.
+
+## Audit Logging
+
+Every admin write endpoint must declare an audit action and write to `audit_logs` after the operation succeeds.
+
+Required audit fields:
+
+```txt
+actorAdminId
+action
+targetType
+targetId when available
+before when available
+after when available
+ipAddress
+userAgent
+```
+
 ## Security Rules
 
 - Firebase Admin SDK secrets must exist only in backend environment.
