@@ -1,0 +1,41 @@
+{
+  "name": "goc-nha-minh-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NestJS API for Goc Nha Minh Digital Ecosystem",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main.js",
+    "seed": "npm run build && node dist/scripts/seed.js",
+    "seed:content": "npm run build && node dist/scripts/seed-public-content.js",
+    "seed:admin": "npm run build && node dist/scripts/bootstrap-admin.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.4",
+    "@nestjs/platform-express": "^11.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "cloudinary": "^2.5.1",
+    "compression": "^1.7.5",
+    "firebase-admin": "^13.0.0",
+    "helmet": "^8.0.0",
+    "mongoose": "^8.9.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "@types/compression": "^1.7.5",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

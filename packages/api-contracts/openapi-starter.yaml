@@ -1,0 +1,50 @@
+openapi: 3.0.3
+info:
+  title: Goc Nha Minh API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/v1
+  - url: https://your-render-api.onrender.com/api/v1
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /auth/session:
+    post:
+      summary: Create app session from Firebase ID token
+      responses:
+        "200":
+          description: Session created
+  /public/menu:
+    get:
+      summary: Get public menu
+      responses:
+        "200":
+          description: Public menu
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          nullable: true
+        message:
+          type: string
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: string
+        firebaseUid:
+          type: string
+        phoneNumber:
+          type: string
+        fullName:
+          type: string
+        avatarUrl:
+          type: string
