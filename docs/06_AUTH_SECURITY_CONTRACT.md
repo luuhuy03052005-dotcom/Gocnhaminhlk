@@ -88,6 +88,16 @@ PermissionGuard
 
 `PermissionGuard` must read required permissions from endpoint metadata and block requests missing any required permission.
 
+## Customer Guard
+
+Customer endpoints must use:
+
+```txt
+CustomerAuthGuard
+```
+
+`CustomerAuthGuard` verifies the Firebase bearer token, maps the Firebase UID to an active customer in MongoDB, blocks blocked users, and enforces the `CUSTOMER_LOGIN` feature flag.
+
 ## Audit Logging
 
 Every admin write endpoint must declare an audit action and write to `audit_logs` after the operation succeeds.

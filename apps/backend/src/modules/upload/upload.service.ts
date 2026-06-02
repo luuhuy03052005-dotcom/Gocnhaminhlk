@@ -19,8 +19,8 @@ export interface UploadBufferInput {
   uploadedByUserId?: string | Types.ObjectId;
 }
 
-const allowedImageMimeTypes = ['image/jpeg', 'image/png', 'image/webp'] as const;
-const allowedUploadFolders = [
+export const allowedImageMimeTypes = ['image/jpeg', 'image/png', 'image/webp'] as const;
+export const allowedUploadFolders = [
   'banners',
   'gallery',
   'menu',
@@ -29,7 +29,9 @@ const allowedUploadFolders = [
   'admins',
   'users',
 ] as const;
-const maxUploadSizeBytes = 5 * 1024 * 1024;
+export const maxUploadSizeBytes = 5 * 1024 * 1024;
+
+export type AllowedUploadFolder = (typeof allowedUploadFolders)[number];
 
 @Injectable()
 export class UploadService {

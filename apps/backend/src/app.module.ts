@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AdminModule } from './modules/admin/admin.module';
 import { AdminsModule } from './modules/admins/admins.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CmsModule } from './modules/cms/cms.module';
+import { CustomerModule } from './modules/customer/customer.module';
 import { FeatureFlagsModule } from './modules/feature-flags/feature-flags.module';
 import { HealthModule } from './modules/health/health.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
@@ -40,6 +42,8 @@ import { VouchersModule } from './modules/vouchers/vouchers.module';
     }),
     HealthModule,
     PublicModule,
+    CustomerModule,
+    AdminModule,
     AuthModule,
     UsersModule,
     AdminsModule,

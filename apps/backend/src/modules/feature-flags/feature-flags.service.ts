@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { FeatureFlag, FeatureFlagDocument } from './schemas/feature-flag.schema';
 
 export const initialFeatureFlags = [
@@ -36,6 +36,24 @@ export class FeatureFlagsService {
     return flag?.enabled ?? false;
   }
 
+  updateByKey(
+    key: string,
+    input: { enabled: boolean; updatedByAdminId: string | Types.ObjectId },
+  ) {
+    return this.featureFlagModel
+      .findOneAndUpdate(
+        { key },
+        {
+          $set: {
+            enabled: input.enabled,
+            updatedByAdminId: this.toObjectId(input.updatedByAdminId),
+          },
+        },
+        { new: true },
+      )
+      .exec();
+  }
+
   async ensureInitialFlags() {
     await Promise.all(
       initialFeatureFlags.map((flag) =>
@@ -47,5 +65,8 @@ export class FeatureFlagsService {
       ),
     );
   }
-}
 
+  private toObjectId(value: string | Types.ObjectId): Types.ObjectId {
+    return typeof value === 'string' ? new Types.ObjectId(value) : value;
+  }
+}

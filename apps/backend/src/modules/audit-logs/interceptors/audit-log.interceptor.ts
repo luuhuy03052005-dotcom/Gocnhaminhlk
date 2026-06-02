@@ -14,6 +14,11 @@ import {
   AuditActionMetadata,
 } from '../decorators/audit-action.decorator';
 
+export interface AuditRequestContext {
+  auditBefore?: Record<string, unknown>;
+  auditTargetId?: string;
+}
+
 @Injectable()
 export class AuditLogInterceptor implements NestInterceptor {
   private readonly logger = new Logger(AuditLogInterceptor.name);
@@ -33,7 +38,9 @@ export class AuditLogInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const request = context.switchToHttp().getRequest<AdminRequest>();
+    const request = context
+      .switchToHttp()
+      .getRequest<AdminRequest & AuditRequestContext>();
 
     return next.handle().pipe(
       tap((response) => {
@@ -44,7 +51,10 @@ export class AuditLogInterceptor implements NestInterceptor {
         const rawTargetId = metadata.targetIdParam
           ? request.params[metadata.targetIdParam]
           : undefined;
-        const targetId = Array.isArray(rawTargetId) ? rawTargetId[0] : rawTargetId;
+        const targetId =
+          (Array.isArray(rawTargetId) ? rawTargetId[0] : rawTargetId) ??
+          request.auditTargetId ??
+          this.getResponseId(response);
 
         void this.auditLogsService
           .create({
@@ -52,6 +62,7 @@ export class AuditLogInterceptor implements NestInterceptor {
             action: metadata.action,
             targetType: metadata.targetType,
             targetId,
+            before: request.auditBefore,
             after: this.toAuditObject(response),
             ipAddress: request.ip,
             userAgent: request.headers['user-agent'],
@@ -72,5 +83,14 @@ export class AuditLogInterceptor implements NestInterceptor {
     }
 
     return value as Record<string, unknown>;
+  }
+
+  private getResponseId(value: unknown): string | undefined {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+
+    const id = (value as { id?: unknown }).id;
+    return typeof id === 'string' ? id : undefined;
   }
 }

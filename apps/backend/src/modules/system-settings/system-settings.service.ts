@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { SystemSetting, SystemSettingDocument } from './schemas/system-setting.schema';
 
 export const initialSystemSettings = [
@@ -32,6 +32,29 @@ export class SystemSettingsService {
     return this.systemSettingModel.findOne({ key }).exec();
   }
 
+  updateByKey(
+    key: string,
+    input: {
+      value: Record<string, unknown>;
+      description?: string;
+      updatedByAdminId: string | Types.ObjectId;
+    },
+  ) {
+    return this.systemSettingModel
+      .findOneAndUpdate(
+        { key },
+        {
+          $set: {
+            value: input.value,
+            description: input.description,
+            updatedByAdminId: this.toObjectId(input.updatedByAdminId),
+          },
+        },
+        { new: true },
+      )
+      .exec();
+  }
+
   async ensureInitialSettings() {
     await Promise.all(
       initialSystemSettings.map((setting) =>
@@ -49,5 +72,8 @@ export class SystemSettingsService {
       ),
     );
   }
-}
 
+  private toObjectId(value: string | Types.ObjectId): Types.ObjectId {
+    return typeof value === 'string' ? new Types.ObjectId(value) : value;
+  }
+}

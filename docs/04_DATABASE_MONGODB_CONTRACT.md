@@ -321,6 +321,32 @@ Order items should be embedded inside the order.
 }
 ```
 
+## point_accounts
+
+```ts
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  balance: number,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+## point_transactions
+
+```ts
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  type: 'EARN' | 'REDEEM' | 'ADJUST',
+  points: number,
+  reason?: string,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
 ## file_assets
 
 ```ts

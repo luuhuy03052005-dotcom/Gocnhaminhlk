@@ -32,6 +32,40 @@ export interface PublicGalleryImage {
   objectPosition?: string;
 }
 
+export interface UpsertBannerInput {
+  type?: 'promo' | 'menu';
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  imageUrl?: string;
+  alt?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
+  badge?: string;
+  price?: string;
+  displayOrder?: number;
+  isActive?: boolean;
+}
+
+export interface UpsertGalleryImageInput {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  imageUrl?: string;
+  alt?: string;
+  badge?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
+  objectPosition?: string;
+  displayOrder?: number;
+  isActive?: boolean;
+}
+
+export interface UpsertWebsiteContentInput {
+  value?: Record<string, unknown>;
+  isActive?: boolean;
+}
+
 @Injectable()
 export class CmsService {
   constructor(
@@ -92,5 +126,92 @@ export class CmsService {
       return content;
     }, {});
   }
-}
 
+  findAllWebsiteContent() {
+    return this.websiteContentModel.find().sort({ key: 1 }).exec();
+  }
+
+  findWebsiteContentByKey(key: string) {
+    return this.websiteContentModel.findOne({ key }).exec();
+  }
+
+  countWebsiteContent() {
+    return this.websiteContentModel.countDocuments().exec();
+  }
+
+  updateWebsiteContent(key: string, input: UpsertWebsiteContentInput) {
+    return this.websiteContentModel
+      .findOneAndUpdate(
+        { key },
+        { $set: this.compact(input) },
+        { new: true },
+      )
+      .exec();
+  }
+
+  findAllBanners() {
+    return this.bannerModel.find().sort({ displayOrder: 1, createdAt: -1 }).exec();
+  }
+
+  countBanners() {
+    return this.bannerModel.countDocuments().exec();
+  }
+
+  findBannerById(id: string) {
+    return this.bannerModel.findById(id).exec();
+  }
+
+  createBanner(input: Required<Pick<UpsertBannerInput, 'title' | 'imageUrl' | 'alt'>> & UpsertBannerInput) {
+    return this.bannerModel.create(input);
+  }
+
+  updateBanner(id: string, input: UpsertBannerInput) {
+    return this.bannerModel
+      .findByIdAndUpdate(id, { $set: this.compact(input) }, { new: true })
+      .exec();
+  }
+
+  deactivateBanner(id: string) {
+    return this.updateBanner(id, { isActive: false });
+  }
+
+  findAllGalleryImages() {
+    return this.galleryImageModel
+      .find()
+      .sort({ displayOrder: 1, createdAt: -1 })
+      .exec();
+  }
+
+  countGalleryImages() {
+    return this.galleryImageModel.countDocuments().exec();
+  }
+
+  findGalleryImageById(id: string) {
+    return this.galleryImageModel.findById(id).exec();
+  }
+
+  createGalleryImage(
+    input: Required<Pick<UpsertGalleryImageInput, 'title' | 'imageUrl' | 'alt'>> &
+      UpsertGalleryImageInput,
+  ) {
+    return this.galleryImageModel.create(input);
+  }
+
+  updateGalleryImage(id: string, input: UpsertGalleryImageInput) {
+    return this.galleryImageModel
+      .findByIdAndUpdate(id, { $set: this.compact(input) }, { new: true })
+      .exec();
+  }
+
+  deactivateGalleryImage(id: string) {
+    return this.updateGalleryImage(id, { isActive: false });
+  }
+
+  private compact<T extends object>(value: T): Partial<T> {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).filter(
+        ([, item]) => item !== undefined,
+      ),
+    ) as Partial<T>;
+  }
+}

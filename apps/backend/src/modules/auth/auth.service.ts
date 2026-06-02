@@ -12,6 +12,7 @@ import { AdminsService } from '../admins/admins.service';
 import { PermissionCode } from '../roles/schemas/permission.schema';
 import { AdminRoleCode } from '../roles/schemas/role.schema';
 import { RolesService } from '../roles/roles.service';
+import { UserStatus } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { AuthSessionResponse } from './interfaces/auth-session-response.interface';
@@ -23,6 +24,15 @@ export interface CurrentAdmin {
   fullName: string;
   role: AdminRoleCode;
   permissions: PermissionCode[];
+}
+
+export interface CurrentCustomer {
+  id: string;
+  firebaseUid: string;
+  phoneNumber: string;
+  fullName: string;
+  avatarUrl?: string;
+  status: UserStatus;
 }
 
 @Injectable()
@@ -47,11 +57,17 @@ export class AuthService {
   }
 
   async getMe(authorization?: string): Promise<AuthSessionResponse> {
-    const firebaseIdToken = this.extractBearerToken(authorization);
-    const decodedToken = await this.verifyFirebaseIdToken(firebaseIdToken);
-    const user = await this.usersService.findByFirebaseUid(decodedToken.uid);
+    const decodedToken = await this.verifyBearerToken(authorization);
+    const user = await this.usersService.findAnyByFirebaseUid(decodedToken.uid);
 
-    if (user) {
+    if (user?.status === 'BLOCKED') {
+      throw new ForbiddenException({
+        error: 'USER_BLOCKED',
+        message: 'Customer account is blocked.',
+      });
+    }
+
+    if (user?.status === 'ACTIVE') {
       return {
         id: user.id,
         firebaseUid: user.firebaseUid,
@@ -65,13 +81,48 @@ export class AuthService {
   }
 
   async authenticateAdminBearer(authorization?: string): Promise<CurrentAdmin> {
-    const firebaseIdToken = this.extractBearerToken(authorization);
-    const decodedToken = await this.verifyFirebaseIdToken(firebaseIdToken);
+    const decodedToken = await this.verifyBearerToken(authorization);
     return this.resolveCurrentAdmin(decodedToken);
   }
 
+  async authenticateCustomerBearer(authorization?: string): Promise<CurrentCustomer> {
+    const decodedToken = await this.verifyBearerToken(authorization);
+    return this.resolveCustomerFromVerifiedToken(decodedToken);
+  }
+
+  async verifyBearerToken(authorization?: string): Promise<DecodedIdToken> {
+    const firebaseIdToken = this.extractBearerToken(authorization);
+    return this.verifyFirebaseIdToken(firebaseIdToken);
+  }
+
+  async resolveCustomerFromVerifiedToken(
+    decodedToken: DecodedIdToken,
+  ): Promise<CurrentCustomer> {
+    return this.resolveCurrentCustomer(decodedToken);
+  }
+
   private async resolveCustomerSession(decodedToken: DecodedIdToken): Promise<AuthSessionResponse> {
-    const existingUser = await this.usersService.findByFirebaseUid(decodedToken.uid);
+    const user = await this.resolveCurrentCustomer(decodedToken);
+
+    return {
+      id: user.id,
+      firebaseUid: user.firebaseUid,
+      phoneNumber: user.phoneNumber,
+      fullName: user.fullName,
+      role: 'CUSTOMER',
+    };
+  }
+
+  private async resolveCurrentCustomer(decodedToken: DecodedIdToken): Promise<CurrentCustomer> {
+    const existingUser = await this.usersService.findAnyByFirebaseUid(decodedToken.uid);
+
+    if (existingUser?.status === 'BLOCKED') {
+      throw new ForbiddenException({
+        error: 'USER_BLOCKED',
+        message: 'Customer account is blocked.',
+      });
+    }
+
     const user =
       existingUser ??
       (await this.usersService.createCustomer({
@@ -86,7 +137,8 @@ export class AuthService {
       firebaseUid: user.firebaseUid,
       phoneNumber: user.phoneNumber,
       fullName: user.fullName ?? '',
-      role: 'CUSTOMER',
+      avatarUrl: user.avatarUrl,
+      status: user.status,
     };
   }
 
