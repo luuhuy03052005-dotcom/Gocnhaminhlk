@@ -1,7 +1,7 @@
 export const featureFlags = {
   CUSTOMER_LOGIN: true,
-  DYNAMIC_MENU: true,
-  DYNAMIC_BANNER: true,
+  DYNAMIC_MENU: false,
+  DYNAMIC_BANNER: false,
   VOUCHER_WALLET: true,
   IN_APP_NOTIFICATION: true,
   WEB_ORDERING: false,

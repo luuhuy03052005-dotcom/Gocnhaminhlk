@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { cn } from '../utils/cn';
+import { useAuth } from '../../contexts/AuthContext';
+import { cn } from '../../utils/cn';
 import { LogOut, Bell, Wallet, User, Menu, X } from 'lucide-react';
 
 export function PortalHeader() {

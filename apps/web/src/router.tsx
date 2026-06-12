@@ -4,7 +4,17 @@ import { LoginPage } from './pages/portal/LoginPage';
 import { ProfilePage } from './pages/portal/ProfilePage';
 import { VoucherWalletPage } from './pages/portal/VoucherWalletPage';
 import { NotificationPage } from './pages/portal/NotificationPage';
+import { PortalHeader } from './components/portal/PortalHeader';
 import App from './App';
+
+function PortalLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[#FDF6EE]">
+      <PortalHeader />
+      {children}
+    </div>
+  );
+}
 
 export const router = createBrowserRouter([
   {
@@ -55,14 +65,3 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
-
-import { PortalHeader } from './components/portal/PortalHeader';
-
-function PortalLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-[#FDF6EE]">
-      <PortalHeader />
-      {children}
-    </div>
-  );
-}

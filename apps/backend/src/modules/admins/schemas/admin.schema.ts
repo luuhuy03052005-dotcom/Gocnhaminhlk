@@ -12,8 +12,11 @@ export class Admin {
   @Prop({ required: true, unique: true, trim: true })
   firebaseUid: string;
 
-  @Prop({ required: true, unique: true, trim: true })
+  @Prop({ required: false, unique: true, sparse: true, trim: true })
   phoneNumber: string;
+
+  @Prop({ required: false, unique: true, sparse: true, trim: true })
+  email: string;
 
   @Prop({ required: true, trim: true })
   fullName: string;

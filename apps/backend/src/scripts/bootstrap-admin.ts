@@ -7,13 +7,13 @@ import { AppModule } from '../app.module';
 const validRoleCodes = ['STAFF', 'MANAGER', 'SUPER_ADMIN'] as const;
 type AdminRoleCode = (typeof validRoleCodes)[number];
 
-function requireEnv(configService: ConfigService, key: string): string {
+function requireEnv(configService: ConfigService, key: string, required = true): string {
   const value = configService.get<string>(key)?.trim();
-  if (!value) {
+  if (required && !value) {
     throw new Error(`${key} is required for admin bootstrap.`);
   }
 
-  return value;
+  return value ?? '';
 }
 
 function resolveRoleCode(configService: ConfigService): AdminRoleCode {
@@ -35,9 +35,14 @@ async function bootstrap() {
     const connection = app.get<Connection>(getConnectionToken());
 
     const firebaseUid = requireEnv(configService, 'ADMIN_FIREBASE_UID');
-    const phoneNumber = requireEnv(configService, 'ADMIN_PHONE_NUMBER');
+    const phoneNumber = requireEnv(configService, 'ADMIN_PHONE_NUMBER', false);
+    const email = requireEnv(configService, 'ADMIN_EMAIL', false);
     const fullName = requireEnv(configService, 'ADMIN_FULL_NAME');
     const roleCode = resolveRoleCode(configService);
+
+    if (!phoneNumber && !email) {
+      throw new Error('At least one of ADMIN_PHONE_NUMBER or ADMIN_EMAIL is required for admin bootstrap.');
+    }
 
     const role = await connection
       .collection('roles')
@@ -52,7 +57,8 @@ async function bootstrap() {
       {
         $set: {
           firebaseUid,
-          phoneNumber,
+          phoneNumber: phoneNumber || null,
+          email: email || null,
           fullName,
           roleId: role._id,
           status: 'ACTIVE',
@@ -65,7 +71,7 @@ async function bootstrap() {
       { upsert: true },
     );
 
-    console.log(`Admin bootstrap completed: phoneNumber=${phoneNumber}, role=${roleCode}`);
+    console.log(`Admin bootstrap completed: phoneNumber=${phoneNumber || 'N/A'}, email=${email || 'N/A'}, role=${roleCode}`);
   } finally {
     await app.close();
   }

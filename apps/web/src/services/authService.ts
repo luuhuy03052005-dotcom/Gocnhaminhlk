@@ -1,13 +1,7 @@
+import type { ConfirmationResult, User, MultiFactorError } from 'firebase/auth';
 import {
-  ConfirmationResult,
-  User,
-  getMultiFactorError,
-  multiFactor,
-  PhoneAuthProvider,
-  PhoneMultiFactorGenerator,
   RecaptchaVerifier,
   signInWithPhoneNumber,
-  updatePassword,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { isCustomerApiConfigured, CustomerApiError } from './customerApi';
@@ -69,8 +63,8 @@ export async function verifyOtp(otp: string): Promise<User> {
     otpState = null;
     return result.user;
   } catch (error) {
-    const mfaError = getMultiFactorError(error);
-    if (mfaError) {
+    const mfaError = error as MultiFactorError;
+    if (mfaError?.code === 'auth/multi-factor-auth-required') {
       throw new Error('MFA_REQUIRED');
     }
     throw new Error('INVALID_OTP');
@@ -106,11 +100,11 @@ export async function createCustomerSession(user: User): Promise<AuthSession> {
     );
   }
 
-  const body = (await response.json()) as { success: boolean; data: AuthSession };
+  const body = (await response.json()) as { success: boolean; data: AuthSession; error?: { code?: string; message?: string } };
   if (!body.success) {
     throw new CustomerApiError(
-      body.data ? undefined : 'SESSION_CREATE_FAILED',
-      body.data ? (body as unknown as { error?: { message?: string } }).error?.message ?? 'Failed to create session' : 'Failed to create session',
+      body.error?.code ?? 'SESSION_CREATE_FAILED',
+      body.error?.message ?? 'Failed to create session',
       response.status,
     );
   }

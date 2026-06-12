@@ -7,10 +7,11 @@ import {
   useRef,
   useState,
 } from 'react';
-import { User } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { AuthSession, createCustomerSession } from '../services/authService';
+import type { AuthSession } from '../services/authService';
+import { createCustomerSession } from '../services/authService';
 import { isCustomerApiConfigured } from '../services/customerApi';
 
 export interface CustomerProfile {

@@ -3,7 +3,7 @@ import { customerApi } from '../../services/customerApi';
 import { cn } from '../../utils/cn';
 import { Phone, User, Camera, Check, AlertCircle } from 'lucide-react';
 import { getAuth } from 'firebase/auth';
-import type { CustomerProfile } from '../../contexts/AuthContext';
+import { useState, useEffect } from 'react';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 

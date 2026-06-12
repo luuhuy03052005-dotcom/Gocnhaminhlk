@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { sendOtp, verifyOtp, resetRecaptcha } from '../services/authService';
-import { cn } from '../utils/cn';
-import { isCustomerApiConfigured } from '../services/customerApi';
+import { useAuth } from '../../contexts/AuthContext';
+import { sendOtp, verifyOtp, resetRecaptcha } from '../../services/authService';
+import { cn } from '../../utils/cn';
+import { isCustomerApiConfigured } from '../../services/customerApi';
 
 type Step = 'phone' | 'otp' | 'loading';
 

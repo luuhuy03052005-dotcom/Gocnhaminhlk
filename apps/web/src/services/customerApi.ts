@@ -65,13 +65,14 @@ async function requestCustomer<T>(
 }
 
 export class CustomerApiError extends Error {
-  constructor(
-    public readonly code: string,
-    message: string,
-    public readonly status: number,
-  ) {
+  code: string;
+  status: number;
+
+  constructor(code: string, message: string, status: number) {
     super(message);
     this.name = 'CustomerApiError';
+    this.code = code;
+    this.status = status;
   }
 }
 
