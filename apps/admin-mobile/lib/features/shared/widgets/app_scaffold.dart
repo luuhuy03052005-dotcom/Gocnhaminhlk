@@ -3,9 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/presentation/bloc/auth_bloc.dart';
-import 'order_status_badge.dart';
-import 'voucher_status_badge.dart';
-import 'common_widgets.dart';
 
 class AppScaffold extends StatelessWidget {
   final Widget child;

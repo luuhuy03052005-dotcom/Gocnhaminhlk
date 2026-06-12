@@ -4,15 +4,33 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/data/api_service.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/dashboard/presentation/pages/dashboard_page.dart';
 import 'features/menu/presentation/pages/menu_page.dart';
+import 'features/menu/presentation/pages/menu_categories_page.dart';
+import 'features/menu/presentation/pages/menu_items_page.dart';
 import 'features/vouchers/presentation/pages/vouchers_page.dart';
 import 'features/orders/presentation/pages/orders_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
+import 'features/settings/presentation/pages/feature_flags_page.dart';
+import 'features/settings/presentation/pages/system_settings_page.dart';
+import 'features/settings/presentation/pages/audit_logs_page.dart';
+import 'features/notifications/presentation/pages/notifications_page.dart';
+import 'features/cms/presentation/pages/banners_page.dart';
+import 'features/cms/presentation/pages/gallery_page.dart';
+import 'features/cms/presentation/pages/content_page.dart';
+import 'features/profile/presentation/pages/profile_page.dart';
+import 'features/menu/data/menu_repository.dart';
+import 'features/vouchers/data/voucher_repository.dart';
+import 'features/orders/data/order_repository.dart';
+import 'features/notifications/data/notification_repository.dart';
+import 'features/cms/data/cms_repository.dart';
+import 'features/settings/data/settings_repository.dart';
+import 'features/shared/widgets/app_scaffold.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +50,15 @@ class _GocNhaMinhAdminAppState extends State<GocNhaMinhAdminApp> {
   late final GoRouter _router;
   bool _ready = false;
 
+  // Repositories
+  late final ApiService _apiService;
+  late final MenuRepository _menuRepository;
+  late final VoucherRepository _voucherRepository;
+  late final OrderRepository _orderRepository;
+  late final NotificationRepository _notificationRepository;
+  late final CmsRepository _cmsRepository;
+  late final SettingsRepository _settingsRepository;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +69,16 @@ class _GocNhaMinhAdminAppState extends State<GocNhaMinhAdminApp> {
     final prefs = await SharedPreferences.getInstance();
     _authRepository = AuthRepositoryImpl(prefs);
     _authBloc = AuthBloc(_authRepository)..add(AuthCheckRequested());
+
+    // Init repositories
+    _apiService = ApiService();
+    _menuRepository = MenuRepository(_apiService);
+    _voucherRepository = VoucherRepository(_apiService);
+    _orderRepository = OrderRepository(_apiService);
+    _notificationRepository = NotificationRepository(_apiService);
+    _cmsRepository = CmsRepository(_apiService);
+    _settingsRepository = SettingsRepository(_apiService);
+
     _router = _buildRouter();
     if (mounted) setState(() => _ready = true);
   }
@@ -67,13 +104,73 @@ class _GocNhaMinhAdminAppState extends State<GocNhaMinhAdminApp> {
       routes: [
         GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
         ShellRoute(
-          builder: (_, __, child) => AppShell(child: child),
+          builder: (_, __, child) => AppScaffold(child: child),
           routes: [
             GoRoute(path: '/dashboard', builder: (_, __) => const DashboardPage()),
             GoRoute(path: '/menu', builder: (_, __) => const MenuPage()),
+            GoRoute(
+              path: '/menu/categories',
+              builder: (_, __) => const MenuCategoriesPage(),
+            ),
+            GoRoute(
+              path: '/menu/categories/new',
+              builder: (_, __) => const MenuCategoriesPage(),
+            ),
+            GoRoute(
+              path: '/menu/items',
+              builder: (_, __) => const MenuItemsPage(),
+            ),
+            GoRoute(
+              path: '/menu/items/new',
+              builder: (_, __) => const MenuItemsPage(),
+            ),
             GoRoute(path: '/vouchers', builder: (_, __) => const VouchersPage()),
+            GoRoute(
+              path: '/vouchers/new',
+              builder: (_, __) => const VouchersPage(),
+            ),
             GoRoute(path: '/orders', builder: (_, __) => const OrdersPage()),
             GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+            GoRoute(
+              path: '/feature-flags',
+              builder: (_, __) => const FeatureFlagsPage(),
+            ),
+            GoRoute(
+              path: '/system-settings',
+              builder: (_, __) => const SystemSettingsPage(),
+            ),
+            GoRoute(
+              path: '/cms/banners',
+              builder: (_, __) => const BannersPage(),
+            ),
+            GoRoute(
+              path: '/cms/banners/new',
+              builder: (_, __) => const BannersPage(),
+            ),
+            GoRoute(
+              path: '/cms/gallery',
+              builder: (_, __) => const GalleryPage(),
+            ),
+            GoRoute(
+              path: '/cms/website-content',
+              builder: (_, __) => const ContentPage(),
+            ),
+            GoRoute(
+              path: '/notifications',
+              builder: (_, __) => const NotificationsPage(),
+            ),
+            GoRoute(
+              path: '/notifications/new',
+              builder: (_, __) => const NotificationsPage(),
+            ),
+            GoRoute(
+              path: '/audit-logs',
+              builder: (_, __) => const AuditLogsPage(),
+            ),
+            GoRoute(
+              path: '/profile',
+              builder: (_, __) => const ProfilePage(),
+            ),
           ],
         ),
       ],
@@ -96,11 +193,32 @@ class _GocNhaMinhAdminAppState extends State<GocNhaMinhAdminApp> {
 
     return BlocProvider.value(
       value: _authBloc,
-      child: MaterialApp.router(
-        title: 'Góc Nhà Mình Admin',
-        debugShowCheckedModeBanner: false,
-        theme: _buildTheme(),
-        routerConfig: _router,
+      child: RepositoryProvider.value(
+        value: _menuRepository,
+        child: RepositoryProvider.value(
+          value: _voucherRepository,
+          child: RepositoryProvider.value(
+            value: _orderRepository,
+            child: RepositoryProvider.value(
+              value: _notificationRepository,
+              child: RepositoryProvider.value(
+                value: _cmsRepository,
+                child: RepositoryProvider.value(
+                  value: _settingsRepository,
+                  child: RepositoryProvider.value(
+                    value: _settingsRepository,
+                    child: MaterialApp.router(
+                      title: 'Góc Nhà Mình Admin',
+                      debugShowCheckedModeBanner: false,
+                      theme: _buildTheme(),
+                      routerConfig: _router,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
