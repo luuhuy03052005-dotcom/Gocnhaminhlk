@@ -99,6 +99,23 @@ Required mitigation:
 Hệ thống đang khởi động, vui lòng đợi trong giây lát...
 ```
 
+## Pre-Deployment: Cloudflare Setup
+
+Before any deployment, configure Cloudflare as the security edge layer:
+
+```
+1. Add domain to Cloudflare dashboard (dash.cloudflare.com)
+2. Update domain nameservers to Cloudflare
+3. Set all DNS records to "Proxied" (orange cloud) for web traffic
+4. SSL/TLS mode: Full (strict)
+5. Enable Bot Fight Mode: Security → Bots → Bot Fight Mode: ON
+6. Enable WAF Managed Rules: Security → WAF → ON
+7. Configure Rate Limiting for /api/* endpoints
+8. Add security headers via Rules → Response Headers
+```
+
+Never expose Render or Vercel direct IPs. Cloudflare must be the only public entry point.
+
 ## Admin Mobile
 
 Flutter app is built from:

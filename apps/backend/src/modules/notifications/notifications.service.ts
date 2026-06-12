@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
@@ -54,6 +54,7 @@ export class NotificationsService {
       });
     }
 
+    const targetUserIds = await this.resolveTargetUserIds(input);
     const notification = await this.notificationModel.create({
       title: input.title,
       content: input.content,
@@ -62,7 +63,6 @@ export class NotificationsService {
       createdByAdminId: this.toObjectId(input.createdByAdminId),
     });
 
-    const targetUserIds = await this.resolveTargetUserIds(input);
     if (targetUserIds.length > 0) {
       await this.userNotificationModel.bulkWrite(
         targetUserIds.map((userId) => ({
@@ -149,13 +149,44 @@ export class NotificationsService {
     }
 
     if (input.targetType === 'USER') {
-      return (input.targetUserIds ?? []).map((id) => this.toObjectId(id));
+      const targetUserIds = input.targetUserIds ?? [];
+      if (targetUserIds.length === 0) {
+        throw new BadRequestException({
+          error: 'NOTIFICATION_TARGET_USERS_REQUIRED',
+          message: 'targetUserIds is required when targetType is USER.',
+        });
+      }
+
+      return this.uniqueObjectIds(targetUserIds.map((id) => this.toObjectId(id)));
     }
 
-    return [];
+    throw new BadRequestException({
+      error: 'NOTIFICATION_GROUP_TARGET_NOT_CONFIGURED',
+      message: 'targetType GROUP is reserved until user groups are implemented.',
+    });
   }
 
   private toObjectId(value: string | Types.ObjectId): Types.ObjectId {
-    return typeof value === 'string' ? new Types.ObjectId(value) : value;
+    if (typeof value !== 'string') {
+      return value;
+    }
+
+    if (!Types.ObjectId.isValid(value)) {
+      throw new BadRequestException({
+        error: 'INVALID_MONGO_ID',
+        message: 'Invalid MongoDB object id.',
+        details: {
+          value,
+        },
+      });
+    }
+
+    return new Types.ObjectId(value);
+  }
+
+  private uniqueObjectIds(values: Types.ObjectId[]): Types.ObjectId[] {
+    return Array.from(
+      new Map(values.map((value) => [value.toHexString(), value])).values(),
+    );
   }
 }

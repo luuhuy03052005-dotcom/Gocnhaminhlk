@@ -10,6 +10,11 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
+import { MongoIdPipe } from '../../common/pipes/mongo-id.pipe';
+import {
+  serializeMongoDocument,
+  serializePlainObject,
+} from '../../common/utils/mongo-serializer';
 import { CurrentCustomer } from '../auth/auth.service';
 import { CurrentCustomerUser } from '../auth/decorators/current-customer.decorator';
 import { CustomerAuthGuard } from '../auth/guards/customer-auth.guard';
@@ -72,7 +77,7 @@ export class CustomerController {
 
   @Patch('notifications/:id/read')
   async markNotificationRead(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @CurrentCustomerUser() customer: CurrentCustomer,
   ) {
     await this.assertFeatureEnabled(
@@ -108,7 +113,7 @@ export class CustomerController {
 
   @Get('orders/:id')
   async getOrder(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @CurrentCustomerUser() customer: CurrentCustomer,
   ) {
     await this.assertFeatureEnabled('WEB_ORDERING', 'Web ordering is disabled.');
@@ -167,56 +172,10 @@ export class CustomerController {
   }
 
   private serializeDocument(document: unknown): Record<string, unknown> {
-    const maybeDocument = document as {
-      id?: string;
-      toObject?: (options?: { virtuals?: boolean }) => Record<string, unknown>;
-    };
-    const plain =
-      typeof maybeDocument.toObject === 'function'
-        ? maybeDocument.toObject({ virtuals: true })
-        : (document as Record<string, unknown>);
-    const id =
-      typeof maybeDocument.id === 'string'
-        ? maybeDocument.id
-        : this.stringifyValue(plain._id);
-    const { _id, __v, id: _plainId, ...rest } = plain;
-
-    return {
-      id,
-      ...this.stringifyObjectValues(rest),
-    };
+    return serializeMongoDocument(document);
   }
 
   private serializePlain(value: Record<string, unknown>): Record<string, unknown> {
-    return this.stringifyObjectValues(value);
-  }
-
-  private stringifyObjectValues(value: Record<string, unknown>): Record<string, unknown> {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, this.stringifyValue(item)]),
-    );
-  }
-
-  private stringifyValue(value: unknown): unknown {
-    if (value instanceof Date) {
-      return value.toISOString();
-    }
-
-    if (Array.isArray(value)) {
-      return value.map((item) => this.stringifyValue(item));
-    }
-
-    if (!value || typeof value !== 'object') {
-      return value;
-    }
-
-    if (
-      'toHexString' in value &&
-      typeof (value as { toHexString: () => string }).toHexString === 'function'
-    ) {
-      return (value as { toHexString: () => string }).toHexString();
-    }
-
-    return this.stringifyObjectValues(value as Record<string, unknown>);
+    return serializePlainObject(value);
   }
 }

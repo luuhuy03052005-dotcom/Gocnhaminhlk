@@ -47,6 +47,8 @@ Error:
 }
 ```
 
+Invalid MongoDB ObjectId path parameters must return `INVALID_MONGO_ID`.
+
 ## Authentication Header
 
 ```txt
@@ -491,6 +493,7 @@ Rules:
 ```txt
 IN_APP_NOTIFICATION feature flag must be ON.
 targetUserIds is required when targetType=USER.
+targetType=GROUP is reserved for a future user-group module and currently returns NOTIFICATION_GROUP_TARGET_NOT_CONFIGURED.
 No Firebase Cloud Messaging is used in MVP.
 ```
 

@@ -15,6 +15,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { MongoIdPipe } from '../../common/pipes/mongo-id.pipe';
+import { serializeMongoDocument } from '../../common/utils/mongo-serializer';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction } from '../audit-logs/decorators/audit-action.decorator';
 import {
@@ -148,7 +150,7 @@ export class AdminController {
   @AuditAction({ action: 'user.status.update', targetType: 'user' })
   @UseInterceptors(AuditLogInterceptor)
   async updateUserStatus(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Body() dto: UpdateUserStatusDto,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
@@ -188,7 +190,7 @@ export class AdminController {
   @AuditAction({ action: 'menu_category.update', targetType: 'menu_category' })
   @UseInterceptors(AuditLogInterceptor)
   async updateMenuCategory(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Body() dto: UpdateMenuCategoryDto,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
@@ -212,7 +214,7 @@ export class AdminController {
   @AuditAction({ action: 'menu_category.delete', targetType: 'menu_category' })
   @UseInterceptors(AuditLogInterceptor)
   async deleteMenuCategory(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
     await this.captureAuditBefore(
@@ -251,7 +253,7 @@ export class AdminController {
   @AuditAction({ action: 'menu_item.update', targetType: 'menu_item' })
   @UseInterceptors(AuditLogInterceptor)
   async updateMenuItem(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Body() dto: UpdateMenuItemDto,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
@@ -275,7 +277,7 @@ export class AdminController {
   @AuditAction({ action: 'menu_item.delete', targetType: 'menu_item' })
   @UseInterceptors(AuditLogInterceptor)
   async deleteMenuItem(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
     await this.captureAuditBefore(
@@ -314,7 +316,7 @@ export class AdminController {
   @AuditAction({ action: 'voucher.update', targetType: 'voucher' })
   @UseInterceptors(AuditLogInterceptor)
   async updateVoucher(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Body() dto: UpdateVoucherDto,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
@@ -338,7 +340,7 @@ export class AdminController {
   @AuditAction({ action: 'voucher.delete', targetType: 'voucher' })
   @UseInterceptors(AuditLogInterceptor)
   async deleteVoucher(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
     await this.captureAuditBefore(
@@ -377,7 +379,7 @@ export class AdminController {
   @AuditAction({ action: 'banner.update', targetType: 'banner' })
   @UseInterceptors(AuditLogInterceptor)
   async updateBanner(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Body() dto: UpdateBannerDto,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
@@ -401,7 +403,7 @@ export class AdminController {
   @AuditAction({ action: 'banner.delete', targetType: 'banner' })
   @UseInterceptors(AuditLogInterceptor)
   async deleteBanner(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
     await this.captureAuditBefore(
@@ -440,7 +442,7 @@ export class AdminController {
   @AuditAction({ action: 'gallery_image.update', targetType: 'gallery_image' })
   @UseInterceptors(AuditLogInterceptor)
   async updateGalleryImage(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Body() dto: UpdateGalleryImageDto,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
@@ -464,7 +466,7 @@ export class AdminController {
   @AuditAction({ action: 'gallery_image.delete', targetType: 'gallery_image' })
   @UseInterceptors(AuditLogInterceptor)
   async deleteGalleryImage(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
     await this.captureAuditBefore(
@@ -647,7 +649,7 @@ export class AdminController {
   @AuditAction({ action: 'order.status.update', targetType: 'order' })
   @UseInterceptors(AuditLogInterceptor)
   async updateOrderStatus(
-    @Param('id') id: string,
+    @Param('id', MongoIdPipe) id: string,
     @Body() dto: UpdateOrderStatusDto,
     @Req() request: AdminRequest & AuditRequestContext,
   ) {
@@ -703,24 +705,7 @@ export class AdminController {
   }
 
   private serializeDocument(document: unknown): Record<string, unknown> {
-    const maybeDocument = document as {
-      id?: string;
-      toObject?: (options?: { virtuals?: boolean }) => Record<string, unknown>;
-    };
-    const plain =
-      typeof maybeDocument.toObject === 'function'
-        ? maybeDocument.toObject({ virtuals: true })
-        : (document as Record<string, unknown>);
-    const id =
-      typeof maybeDocument.id === 'string'
-        ? maybeDocument.id
-        : this.stringifyValue(plain._id);
-    const { _id, __v, id: _plainId, ...rest } = plain;
-
-    return {
-      id,
-      ...this.stringifyObjectIds(rest),
-    };
+    return serializeMongoDocument(document);
   }
 
   private serializeFoundDocument(
@@ -770,34 +755,12 @@ export class AdminController {
         message: 'targetUserIds is required when targetType is USER.',
       });
     }
-  }
 
-  private stringifyObjectIds(value: Record<string, unknown>): Record<string, unknown> {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, this.stringifyValue(item)]),
-    );
-  }
-
-  private stringifyValue(value: unknown): unknown {
-    if (value instanceof Date) {
-      return value.toISOString();
+    if (dto.targetType === 'GROUP') {
+      throw new BadRequestException({
+        error: 'NOTIFICATION_GROUP_TARGET_NOT_CONFIGURED',
+        message: 'targetType GROUP is reserved until user groups are implemented.',
+      });
     }
-
-    if (Array.isArray(value)) {
-      return value.map((item) => this.stringifyValue(item));
-    }
-
-    if (!value || typeof value !== 'object') {
-      return value;
-    }
-
-    if (
-      'toHexString' in value &&
-      typeof (value as { toHexString: () => string }).toHexString === 'function'
-    ) {
-      return (value as { toHexString: () => string }).toHexString();
-    }
-
-    return this.stringifyObjectIds(value as Record<string, unknown>);
   }
 }

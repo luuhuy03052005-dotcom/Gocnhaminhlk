@@ -251,6 +251,10 @@ Order items should be embedded inside the order.
 }
 ```
 
+MVP rule: `targetType='GROUP'` is reserved for a future user-group module.
+Backend must reject group-targeted notification creation until group membership
+is implemented.
+
 ## banners
 
 ```ts
